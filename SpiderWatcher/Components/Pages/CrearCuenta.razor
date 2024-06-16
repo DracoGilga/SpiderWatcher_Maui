@@ -1,0 +1,133 @@
+﻿@page "/crearCuenta"
+@using SpiderWatcher.DTOs.UserDTO
+@using Newtonsoft.Json
+@inject HttpClient Http
+
+
+<div class="container bg-dark text-white">
+    <div class="row justify-content-center">
+        <div class="col-xl-10 col-xl-8 bg-dark">
+            <div class="card mt-5 bg-dark">
+                <div class="card-body bg-dark">
+                    <h2 class="card-title text-light">Create Account</h2>
+                    <EditForm Model="@createUserDto" OnValidSubmit="@CreateAccount">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div class="form-group mb-3">
+                            <label for="email">E-mail:</label>
+                            <InputText id="email" @bind-Value="createUserDto.Email" class="form-control bg-secondary text-white" required disabled="@formSubmitted" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="name">Name:</label>
+                            <InputText id="name" @bind-Value="createUserDto.Name" class="form-control bg-secondary text-white" required disabled="@formSubmitted" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="lastname">Last Name:</label>
+                            <InputText id="lastname" @bind-Value="createUserDto.LastName" class="form-control bg-secondary text-white" required disabled="@formSubmitted" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="birthday">Birthday:</label>
+                            <InputDate id="birthday" @bind-Value="createUserDto.DateBirth" class="form-control bg-secondary text-white" required disabled="@formSubmitted" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="username">User Name:</label>
+                            <InputText id="username" @bind-Value="createUserDto.UserName" class="form-control bg-secondary text-white" required disabled="@formSubmitted" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="password">Password:</label>
+                            <InputText id="password" @bind-Value="createUserDto.Password" type="password" class="form-control bg-secondary text-white" required disabled="@formSubmitted" />
+                        </div>
+                        <div class="form-group form-check mb-3">
+                            <InputCheckbox id="terms" @bind-Value="termsAgreed" class="form-check-input bg-secondary text-white" required />
+                            <label class="form-check-label" for="terms">By creating an account you agree to our <a href="#">Terms of Use</a> and <a href="#">Privacy Policy</a>.</label>
+                        </div>
+                        <button type="submit" id="submit" class="btn btn-primary" disabled="@(!termsAgreed)">Create Account</button>
+                    </EditForm>
+
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="alert alert-success mt-3">@successMessage</div>
+                        <div class="form-group mb-3">
+                            <label for="codigo">Codigo:</label>
+                            <InputText id="codigo" @bind-Value="validateUserDTO.ValidationMessage" class="form-control bg-secondary text-white" required />
+                        </div>
+                        <button type="submit" id="submit" class="btn btn-primary" @onclick="ValidarCuenta" disabled="@(string.IsNullOrEmpty(validateUserDTO.ValidationMessage))">Validate Account</button>
+                    }
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger mt-3">@errorMessage</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    //Usar CreateUserDTO en lugar de UserModel
+    private CreateUserDTO createUserDto = new CreateUserDTO();
+    private ValidateUserDTO validateUserDTO = new ValidateUserDTO();
+    private CreateUserResponseDTO createUserResponseDTO = new CreateUserResponseDTO();
+
+    private bool termsAgreed = false;
+    private string successMessage;
+    private string errorMessage;
+    private bool formSubmitted = false;
+
+    private async Task CreateAccount()
+    {
+        successMessage = string.Empty;
+        errorMessage = string.Empty;
+        formSubmitted = true;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("User", createUserDto);
+            if (response.IsSuccessStatusCode)
+            {
+                string reponseBody = await response.Content.ReadAsStringAsync();
+
+                createUserResponseDTO = JsonConvert.DeserializeObject<CreateUserResponseDTO>(reponseBody);
+                successMessage = "Account created successfully!";
+
+            }
+            else
+            {
+                errorMessage = "Failed to create account.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+    }
+
+    private async Task ValidarCuenta(MouseEventArgs e)
+    {
+        validateUserDTO.UpdateType = "UpdateUser";
+        validateUserDTO.Password = createUserDto.Password;
+        validateUserDTO.UserName = createUserDto.UserName;
+
+        //validateUserDTO.IdUser = 39; //cambiar esto que esta hardcodeado
+        //convert response to CreateUserResponseDTO
+        validateUserDTO.IdUser = createUserResponseDTO.idUser;
+
+        try
+        {
+            var response = await Http.PutAsJsonAsync("User", validateUserDTO);
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = "Account validated successfully!";
+            }
+            else
+            {
+                errorMessage = "Failed to validate account.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+    }    
+}

@@ -1,27 +1,90 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">SpiderWatcher</a>
+﻿@using Microsoft.AspNetCore.Components;
+@using SpiderWatcher.Services
+@inject NavigationService NavService
+@inject NavigationManager Navigation
+
+<div>
+    <div class="top-row ps-3 navbar navbar-dark position-relative">
+        <div class="container-fluid d-flex justify-content-between">
+            <a class="navbar-brand">SpiderWatcher</a>
+        </div>
     </div>
+
+    <div class="nav-scrollable position-relative">
+        <nav class="flex-column position-absolute top-0 start-0 w-100" style="z-index: 50;" @onclick="ToggleNavMenu">
+            @if (IsCurrentPage("crearCuenta"))
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="crearCuenta">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> CrearCuenta
+                    </NavLink>
+                </div>
+            }
+            @if (IsCurrentPage("recuperarCuenta"))
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="recuperarCuenta">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> RecuperarCuenta
+                    </NavLink>
+                </div>
+            }
+            @if (IsCurrentPage("visualizarContenido") || IsCurrentPage("contenidoBusqueda"))
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="contenidoBusqueda">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> ContenidoBusqueda
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="visualizarContenido">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> VisualizarContenido
+                    </NavLink>
+                </div>
+            }
+            @if (IsCurrentPage("reproducirContenido"))
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="reproducirContenido">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> ReproducirContenido
+                    </NavLink>
+                </div>
+            }
+        </nav>
+    </div>
+    <button class="btn btn-primary position-absolute bottom-0 end-0 mb-4 me-3 rounded-circle" style="width: 50px; height: 50px; background-color: white; border: 1px solid #ccc;" @onclick="LogOut">
+        <span class="navbar-toggler-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#333" class="bi bi-power" viewBox="0 0 16 16">
+                <path d="M7.5 1v7h1V1h-1z" />
+                <path d="M7.5 14a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11z" />
+            </svg>
+        </span>
+    </button>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+@code {
+    private bool collapseNavMenu = true;
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void LogOut()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+        // Implementar el borrado del token
+    }
+
+    private bool IsCurrentPage(string page)
+    {
+        var uri = new Uri(Navigation.Uri);
+        var path = uri.AbsolutePath.Trim('/');
+        if (string.IsNullOrEmpty(page))
+        {
+            return string.IsNullOrEmpty(path);
+        }
+        return path.StartsWith(page, StringComparison.OrdinalIgnoreCase);
+    }
+}

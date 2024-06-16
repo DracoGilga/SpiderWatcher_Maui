@@ -1,0 +1,96 @@
+﻿@page "/visualizarContenido/{id}"
+@using SpiderWatcher.Conexion
+@using SpiderWatcher.DTOs.ContentDTO
+@using Newtonsoft.Json
+@inject Conexion.AzureBlobService AzureBlobService
+@inject AuthenticationService AuthService
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+
+<PageTitle>Visualizar Contenido</PageTitle>
+
+@if (!authenticated)
+{
+    <p>Redireccionando...</p>
+    @code {
+    private bool authenticated;
+
+    protected override async Task OnInitializedAsync()
+    {
+        authenticated = await AuthService.IsUserAuthenticatedAsync();
+        if (!authenticated)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            await CargarInformacion();
+        }
+    }
+}
+}
+else
+{
+    <div class="container mt-4 bg-dark text-white">
+        <div class="video-preview">
+            @if(readContentDTO.ImageData != null)
+            {
+                <img src="data:image/png;base64,@Convert.ToBase64String(readContentDTO.ImageData)" class="img-fluid" alt="Vista Previa del Video">
+            }
+            else
+            {
+                <img src="" class="img-fluid" alt="Vista Previa del Video">
+            }
+            <button class="play-button btn btn-primary" @onclick="PlayVideo">&#9658;</button>
+            <button class="btn btn-light back-button" @onclick="BackButtonClicked">&#x2190; Atrás</button>
+        </div>
+        <div class="video-details mt-3">
+            <h1 id="videoTitle">@readContentDTO.Title</h1>
+            <p id="videoDescription">@readContentDTO.Description</p>
+            <p class="director">Director: <span id="videoDirector">@readContentDTO.Director</span></p>
+            <p>Fecha: <span id="videoDate">@readContentDTO.PublicationDate</span></p>
+            <p>Duración: <span id="videoDuration">@readContentDTO.Duration</span></p>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    ReadContentDTO readContentDTO = new ReadContentDTO();
+
+    private async Task CargarInformacion()
+    {
+        try
+        {
+            var response = await Http.GetAsync($"Content/{Id}");
+            if(response.IsSuccessStatusCode)
+            {
+                string responseBody = await response.Content.ReadAsStringAsync();
+                readContentDTO = JsonConvert.DeserializeObject<ReadContentDTO>(responseBody);
+                readContentDTO.ImageData = await AzureBlobService.GetImageAsync(readContentDTO.ImageReference);
+
+            }
+            else
+            {
+                Console.WriteLine("Error al obtener el contenido.");
+            }
+        }catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    private async Task BackButtonClicked()
+    {
+        NavigationManager.NavigateTo("/contenidoBusqueda");
+    }
+
+    private void PlayVideo()
+    {
+        var videoReference = readContentDTO.VideoReference;
+        NavigationManager.NavigateTo($"/reproducirContenido/{videoReference}");
+    }
+}

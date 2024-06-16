@@ -1,0 +1,148 @@
+﻿@page "/contenidoBusqueda"
+@using SpiderWatcher.DTOs.ContentDTO
+@using Newtonsoft.Json
+@using SpiderWatcher.Models
+@using System.Net.Http.Headers
+@inject Conexion.AzureBlobService AzureBlobService
+@inject AuthenticationService AuthService
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<div class="container mt-4 bg-dark text-white">
+    <div class="row mb-4 align-items-center">
+        <div class="col-auto bg-dark">
+            <button class="btn btn-secondary" @onclick="BackButtonClicked">&#x2190;</button>
+        </div>
+        <div class="col bg-dark">
+            <div class="input-group">
+                <span class="input-group-text icon bg-dark text-white">&#128269;</span>
+                <input type="text" id="searchInput" class="form-control bg-secondary text-white" placeholder="Buscar" @bind="searchQuery" @onkeydown="HandleKeyDown">
+            </div>
+        </div>
+    </div>
+        <!-- Video Thumbnails will be inserted here -->
+        @if(contents2 is null)
+        {
+            <p>Empty</p>
+        }else if(contents2.Count == 0)
+        {
+            <p>No se encontraron resultados</p>
+        }
+        else
+        {
+            <div class="row">
+                @foreach (var content in contents2)
+                {
+                    <div class="col mt-3">
+                    <div class="cardVideo bg-dark text-white align-items-center" @onclick="() => VerDetalles(content.idContent)">
+                        @if (content.ImageData != null)
+                        {
+                            <img src="data:image/png;base64,@Convert.ToBase64String(content.ImageData)" class="card-img-top" alt="No image" />
+                        }
+                        else
+                        {
+                            <img src="" class="card-img-top" alt="No image" />
+                        }
+
+                            <div class="card-body">
+                            <p class="card-text titleCardText align-items-center"><strong>@content.title</strong></p>
+                            </div>
+
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+</div>
+
+@code {
+    private string searchQuery;
+    private string successMessage;
+    private string errorMessage;
+    private ContentsDTO contentsDTO = new ContentsDTO();
+    //private Contents contents { get; set; }
+    private List<ContentsDTO> contents2 = new List<ContentsDTO>();
+
+    protected override Task OnInitializedAsync()
+    {
+        ExecuteSearch();
+        return base.OnInitializedAsync();
+    }
+
+    private async Task BackButtonClicked()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            ExecuteSearch();
+        }
+    }
+
+    private async void ExecuteSearch()
+    {
+            Console.WriteLine($"Buscar: {searchQuery}");
+            try
+            {
+
+                var token = await AuthService.GetTokenAsync();
+                Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var userID = 42; //esto habra que jalarlo de la sesion
+                var response = await Http.GetAsync($"Content/all/{userID}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    contents2 = JsonConvert.DeserializeObject<List<ContentsDTO>>(responseBody);
+                    foreach (var content in contents2)
+                    {
+                        content.ImageData = await AzureBlobService.GetImageAsync(content.imageReference);
+                    }
+
+   
+                    StateHasChanged();
+                }
+                else
+                {
+                    errorMessage = "No se encontraron resultados";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = ex.Message;
+            }
+        // var result = await Http.GetAsync($"api/busqueda?query={searchQuery}");
+            // var content = await result.Content.ReadAsStringAsync();
+            // Procesa el resultado de la búsqueda
+    }
+
+    private void VerDetalles(int id)
+    {
+        NavigationManager.NavigateTo($"/visualizarContenido/{id}");
+    }
+
+}
+
+<style>
+    .input-group-text.icon {
+        font-size: 1.2rem; 
+        color: #17a2b8; 
+        background-color: #343a40; 
+        border: 1px solid #ced4da; 
+    }
+
+    div.cardVideo {
+        width: 300px;
+        height: 600px;
+        box-shadow: 0 4px 8px 0 gray, 0 6px 20px 0 gray;
+        text-align: center;
+    }
+
+    .titleCardText{
+        font-size: 1.5rem;
+        color: #00e5ff;
+    }
+</style>
