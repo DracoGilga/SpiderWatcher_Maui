@@ -3,7 +3,6 @@
 @inject AuthenticationService AuthService
 @using SpiderWatcher.DTOs.UserDTO
 
-
 <PageTitle>SpiderWatcher-Home</PageTitle>
 
 <div class="container-fluid bg-dark text-white full-height d-flex justify-content-center align-items-center">
@@ -17,13 +16,21 @@
         <div class="col-md-6 d-flex justify-content-center align-items-center right-section bg-dark">
             <div class="w-100 px-3">
                 <h2 class="text-info text-center loginBig">Login</h2>
+
+                @if (showError)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        El usuario o la contraseña no son correctos.
+                    </div>
+                }
+
                 <div class="form-group">
-                    <label for="username" class="text-light label-medium">Username</label>
-                    <InputText id="username" @bind-Value="loginUserDTO.UserName" class="form-control bg-secondary text-white small-input" placeholder="Usuario" required />
+                    <label for="username" class="text-light label-medium"></label>
+                    <InputText id="username" @bind-Value="loginUserDTO.UserName" class="form-control bg-secondary text-white small-input input-white" placeholder="Username" required />
                 </div>
                 <div class="form-group">
-                    <label for="password" class="text-light label-medium">Password</label>
-                    <InputText id="password" @bind-Value="loginUserDTO.Password" class="form-control bg-secondary text-white small-input" placeholder="Contraseña" required Type="password" />
+                    <label for="password" class="text-light label-medium"></label>
+                    <InputText id="password" @bind-Value="loginUserDTO.Password" class="form-control bg-secondary text-white small-input input-white" placeholder="Password" required Type="password" />
                     <a href="#" @onclick="ShowRecoverAccount" class="text-info">Forgot Password?</a>
                 </div>
                 <div class="form-group text-center">
@@ -83,7 +90,18 @@
 
     private bool showModal = false;
     private bool showRecoverAccount = false;
+    private bool showError = false;
 
+    //on initialize
+    protected override async Task OnInitializedAsync()
+    {
+        //if user is authenticated, redirect to contenidoBusqueda
+        var isAuthenticated = await AuthService.IsUserAuthenticatedAsync();
+        if (isAuthenticated)
+        {
+            NavigationManager.NavigateTo("/contenidoBusqueda");
+        }
+    }
     private void ShowModal()
     {
         showModal = true;
@@ -113,9 +131,7 @@
         }
         else
         {
-            // Mostrar mensaje de error
-            //hacer logout de mientras para probar que funcione
-            await AuthService.LogoutAsync();
+            showError = true;
 
         }
     }   
@@ -186,5 +202,9 @@
 
     .titleImg{
         text-decoration: underline;
+    }
+
+    .input-white::placeholder {
+        color: #ffff;
     }
 </style>

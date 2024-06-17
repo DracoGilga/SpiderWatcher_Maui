@@ -9,26 +9,21 @@
             <div class="card mt-5 bg-dark">
                 <div class="card-body bg-dark">
                     <h2 class="card-title text-light">Recover Account</h2>
-                    <form>
+                    <EditForm Model="@updateUserContainerDTO" OnValidSubmit="@RecoverAccount">
                         <div class="form-group mb-3">
-                            <label for="email">E-mail</label>
-                            <input type="email" id="email" name="email" class="form-control bg-secondary text-white" required @bind="email">
+                            <input type="email" id="email" name="email" class="form-control bg-secondary text-white input-white" placeholder="E-mail" required @bind="email">
                         </div>
-                        <button type="button" id="send-button" class="btn btn-secondary btn-block mb-3" @onclick="SendClicked">Send</button>
+                        <button type="button" id="send-button" class="btn btn-secondary btn-secondary-custom btn-block mb-3" @onclick="SendEmail">Send</button>
                         <div class="form-row align-items-center mb-3">
                             <div class="col">
-                                <input type="text" id="code" name="code" class="form-control bg-secondary text-white" placeholder="Code" required @bind="code" disabled="@string.IsNullOrEmpty(email)">
-                            </div>
-                            <label> </label>
-                            <div class="col-auto">
-                                <button type="button" class="btn btn-secondary" @onclick="VerifyClicked" id="verify-button" disabled="@string.IsNullOrEmpty(code)">Verify</button>
+                                <input type="text" id="code" name="code" class="form-control bg-secondary text-white input-white" placeholder="Code" required @bind="code" disabled="@string.IsNullOrEmpty(email)">
                             </div>
                         </div>
                         <div class="form-group mb-3">
-                            <input type="password" id="new-password" name="new-password" class="form-control bg-secondary text-white" placeholder="New Password" required @bind="newPassword" disabled="@string.IsNullOrEmpty(code)">
+                            <input type="password" id="new-password" name="new-password" class="form-control bg-secondary text-white input-white" placeholder="New Password" required @bind="newPassword" disabled="@string.IsNullOrEmpty(code)">
                         </div>
                         <button type="submit" class="btn btn-primary btn-block" @onclick="RecoverAccount" disabled="@string.IsNullOrEmpty(newPassword)">Accept</button>
-                    </form>
+                    </EditForm>
                 </div>
             </div>
         </div>
@@ -38,22 +33,72 @@
 @code {
     private UpdateUserContainerDTO updateUserContainerDTO = new UpdateUserContainerDTO();
     private UpdatePasswordUserDTO updatePasswordUserDTO = new UpdatePasswordUserDTO();
+    private ValidateUserDTO validateUserDTO = new ValidateUserDTO();
+    private LoginUserDTO loginUserDTO = new LoginUserDTO();
+    private RecoverPasswordDTO recoverPasswordDTO = new RecoverPasswordDTO();
     private string email;
     private string code;
     private string newPassword;
 
-    private void SendClicked()
+    private void SendEmail()
     {
-        // Correo de recuperación
-    }
+        try
+        {
+            recoverPasswordDTO.Email = email;
+            var response = Http.PostAsJsonAsync("User/Recover", recoverPasswordDTO);
+            if (response.Result.IsSuccessStatusCode)
+            {
+                //aqui vendria bien que active el boton de cambiar contraseña (osea el de hasta abajo)
+            }
+            else
+            {
+                // Mensaje de error
+            }
 
-    private void VerifyClicked()
-    {
-        // Verificar código de recuperación
+        }catch(Exception ex)
+        {
+            // Mensaje de error
+            Console.WriteLine("Error: "+ex);
+        }
     }
 
     private void RecoverAccount()
     {
         // Recuperar cuenta
+        updateUserContainerDTO.UpdateType = "UpdatePassword";
+        updateUserContainerDTO.Password = newPassword;
+        updateUserContainerDTO.UserEmail = email;
+        updateUserContainerDTO.ValidationMessage = "";
+        updateUserContainerDTO.UserName = "";
+
+        var response = Http.PutAsJsonAsync("User", updateUserContainerDTO);
+        if (response.Result.IsSuccessStatusCode)
+        {
+            // Mensaje de éxito
+            Console.WriteLine("Contraseña actualizada");
+        }
+        else
+        {
+            // Mensaje de error
+        }
+
     }
 }
+
+<style>
+    .input-white::placeholder {
+        color: #ffff; 
+    }
+
+    .btn-secondary-custom {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+    }
+
+    .btn-secondary-custom:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
+    
+</style>

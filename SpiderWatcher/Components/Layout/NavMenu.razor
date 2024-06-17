@@ -2,6 +2,7 @@
 @using SpiderWatcher.Services
 @inject NavigationService NavService
 @inject NavigationManager Navigation
+@inject AuthenticationService AuthService
 
 <div>
     <div class="top-row ps-3 navbar navbar-dark position-relative">
@@ -66,8 +67,9 @@
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
-    private void LogOut()
+    private async Task LogOut()
     {
+        await AuthService.LogoutAsync();
         Navigation.NavigateTo("/");
     }
 
@@ -80,10 +82,10 @@
     private bool IsCurrentPage(string page)
     {
         var uri = new Uri(Navigation.Uri);
-        var path = uri.AbsolutePath.Trim('/');
+        var path = uri.AbsolutePath.Trim('/'); 
         if (string.IsNullOrEmpty(page))
         {
-            return string.IsNullOrEmpty(path);
+            return string.IsNullOrEmpty(path); 
         }
         return path.StartsWith(page, StringComparison.OrdinalIgnoreCase);
     }

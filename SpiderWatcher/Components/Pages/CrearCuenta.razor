@@ -14,28 +14,28 @@
                         <DataAnnotationsValidator />
                         <ValidationSummary />
                         <div class="form-group mb-3">
-                            <label for="email">E-mail:</label>
-                            <InputText id="email" @bind-Value="createUserDto.Email" class="form-control bg-secondary text-white" required disabled="@formSubmitted" />
+                            <label for="email"></label>
+                            <InputText id="email" @bind-Value="createUserDto.Email" class="form-control bg-secondary text-white input-white" placeholder="E-mail" required disabled="@formSubmitted" />
                         </div>
                         <div class="form-group mb-3">
-                            <label for="name">Name:</label>
-                            <InputText id="name" @bind-Value="createUserDto.Name" class="form-control bg-secondary text-white" required disabled="@formSubmitted" />
+                            <label for="name"></label>
+                            <InputText id="name" @bind-Value="createUserDto.Name" class="form-control bg-secondary text-white input-white" placeholder="Name" required disabled="@formSubmitted" />
                         </div>
                         <div class="form-group mb-3">
-                            <label for="lastname">Last Name:</label>
-                            <InputText id="lastname" @bind-Value="createUserDto.LastName" class="form-control bg-secondary text-white" required disabled="@formSubmitted" />
+                            <label for="lastname"></label>
+                            <InputText id="lastname" @bind-Value="createUserDto.LastName" class="form-control bg-secondary text-white input-white" placeholder="LastName" required disabled="@formSubmitted" />
                         </div>
                         <div class="form-group mb-3">
-                            <label for="birthday">Birthday:</label>
+                            <label for="birthday">Datebirth:</label>
                             <InputDate id="birthday" @bind-Value="createUserDto.DateBirth" class="form-control bg-secondary text-white" required disabled="@formSubmitted" />
                         </div>
                         <div class="form-group mb-3">
-                            <label for="username">User Name:</label>
-                            <InputText id="username" @bind-Value="createUserDto.UserName" class="form-control bg-secondary text-white" required disabled="@formSubmitted" />
+                            <label for="username"></label>
+                            <InputText id="username" @bind-Value="createUserDto.UserName" class="form-control bg-secondary text-white input-white" placeholder="Username" required disabled="@formSubmitted" />
                         </div>
                         <div class="form-group mb-3">
-                            <label for="password">Password:</label>
-                            <InputText id="password" @bind-Value="createUserDto.Password" type="password" class="form-control bg-secondary text-white" required disabled="@formSubmitted" />
+                            <label for="password"></label>
+                            <InputText id="password" @bind-Value="createUserDto.Password" type="password" class="form-control bg-secondary text-white input-white" placeholder="Password" required disabled="@formSubmitted" />
                         </div>
                         <div class="form-group form-check mb-3">
                             <InputCheckbox id="terms" @bind-Value="termsAgreed" class="form-check-input bg-secondary text-white" required />
@@ -48,8 +48,8 @@
                     {
                         <div class="alert alert-success mt-3">@successMessage</div>
                         <div class="form-group mb-3">
-                            <label for="codigo">Codigo:</label>
-                            <InputText id="codigo" @bind-Value="validateUserDTO.ValidationMessage" class="form-control bg-secondary text-white" required />
+                            <label for="codigo"></label>
+                            <InputText id="codigo" @bind-Value="validateUserDTO.ValidationMessage" class="form-control bg-secondary text-white input-white" placeholder="Code" required />
                         </div>
                         <button type="submit" id="submit" class="btn btn-primary" @onclick="ValidarCuenta" disabled="@(string.IsNullOrEmpty(validateUserDTO.ValidationMessage))">Validate Account</button>
                     }
@@ -74,6 +74,11 @@
     private string successMessage;
     private string errorMessage;
     private bool formSubmitted = false;
+
+    protected override void OnInitialized()
+    {
+        createUserDto.DateBirth = DateOnly.FromDateTime(DateTime.Now);
+    }
 
     private async Task CreateAccount()
     {
@@ -131,3 +136,9 @@
         }
     }    
 }
+
+<style>
+    .input-white::placeholder {
+        color: #ffff;
+    }
+</style>

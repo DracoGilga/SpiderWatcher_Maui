@@ -34,7 +34,7 @@ namespace SpiderWatcher
             builder.Services.AddScoped(sp => new AzureBlobService(blobStorageConnectionString, imageContainerName));
             builder.Services.AddScoped(sp => new AzureVideoService(blobStorageConnectionString, videoContainerName));
 
-            var apiBaseDeAddress = "https://apigatewaysw.azurewebsites.net";
+            var apiBaseDeAddress = "http://localhost:8088";
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseDeAddress) });
 
             builder.Services.AddScoped<AuthenticationService>();

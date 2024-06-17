@@ -43,6 +43,8 @@
         {
             videoData = await AzureVideoService.GetVideoAsync(videoReference);
             videoUrl = ConvertToDataUrl(videoData);
+            //liberate memory
+            videoData = null;
             Console.WriteLine(videoUrl); // Agregar esta línea para debug
             StateHasChanged();
         }

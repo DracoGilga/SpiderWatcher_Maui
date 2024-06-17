@@ -16,6 +16,6 @@ namespace SpiderWatcher.DTOs.ContentDTO
         public string VideoReference { get; init; }
 
         [JsonIgnore]
-        public byte[] ImageData { get; set; }
+        public byte[] ImageData { get; set; }  // Nueva propiedad para almacenar los datos de la imagen
     }
 }
