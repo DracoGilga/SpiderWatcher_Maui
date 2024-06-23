@@ -19,9 +19,11 @@ namespace SpiderWatcher.Conexion
             var blobContainerClient = blobServiceClient.GetBlobContainerClient(_containerName);
             var blobClient = blobContainerClient.GetBlobClient(videoName);
 
-            using var memoryStream = new MemoryStream();
-            await blobClient.DownloadToAsync(memoryStream);
-            return memoryStream.ToArray();
+            using (var memoryStream = new MemoryStream())
+            {
+                await blobClient.DownloadToAsync(memoryStream);
+                return memoryStream.ToArray();
+            }
         }
     }
 }

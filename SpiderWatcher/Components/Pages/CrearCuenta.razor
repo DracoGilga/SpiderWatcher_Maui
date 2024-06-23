@@ -65,7 +65,6 @@
 </div>
 
 @code {
-    //Usar CreateUserDTO en lugar de UserModel
     private CreateUserDTO createUserDto = new CreateUserDTO();
     private ValidateUserDTO validateUserDTO = new ValidateUserDTO();
     private CreateUserResponseDTO createUserResponseDTO = new CreateUserResponseDTO();
@@ -114,8 +113,6 @@
         validateUserDTO.Password = createUserDto.Password;
         validateUserDTO.UserName = createUserDto.UserName;
 
-        //validateUserDTO.IdUser = 39; //cambiar esto que esta hardcodeado
-        //convert response to CreateUserResponseDTO
         validateUserDTO.IdUser = createUserResponseDTO.idUser;
 
         try
@@ -134,7 +131,7 @@
         {
             errorMessage = $"An error occurred: {ex.Message}";
         }
-    }    
+    }
 }
 
 <style>

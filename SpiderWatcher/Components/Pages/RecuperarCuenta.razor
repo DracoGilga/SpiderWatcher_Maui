@@ -24,6 +24,16 @@
                         </div>
                         <button type="submit" class="btn btn-primary btn-block" @onclick="RecoverAccount" disabled="@string.IsNullOrEmpty(newPassword)">Accept</button>
                     </EditForm>
+
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="alert alert-success mt-3">@successMessage</div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger mt-3">@errorMessage</div>
+                    }
                 </div>
             </div>
         </div>
@@ -39,31 +49,38 @@
     private string email;
     private string code;
     private string newPassword;
+    private string successMessage;
+    private string errorMessage;
 
-    private void SendEmail()
+    private async Task SendEmail()
     {
+
         try
         {
             recoverPasswordDTO.Email = email;
-            var response = Http.PostAsJsonAsync("User/Recover", recoverPasswordDTO);
-            if (response.Result.IsSuccessStatusCode)
+            var response = await Http.PostAsJsonAsync("User/Recover", recoverPasswordDTO);
+            if (response.IsSuccessStatusCode)
             {
-                //aqui vendria bien que active el boton de cambiar contraseña (osea el de hasta abajo)
+                successMessage = "Successful email sending!";
             }
             else
             {
-                // Mensaje de error
+                errorMessage = "Error sending email.";
             }
 
-        }catch(Exception ex)
+        }
+        catch (Exception ex)
         {
-            // Mensaje de error
-            Console.WriteLine("Error: "+ex);
+
+            Console.WriteLine("Error: " + ex);
         }
     }
 
-    private void RecoverAccount()
+
+    private async Task RecoverAccount()
     {
+        successMessage = string.Empty;
+        errorMessage = string.Empty;
         // Recuperar cuenta
         updateUserContainerDTO.UpdateType = "UpdatePassword";
         updateUserContainerDTO.Password = newPassword;
@@ -71,15 +88,15 @@
         updateUserContainerDTO.ValidationMessage = "";
         updateUserContainerDTO.UserName = "";
 
-        var response = Http.PutAsJsonAsync("User", updateUserContainerDTO);
-        if (response.Result.IsSuccessStatusCode)
+        var response = await Http.PutAsJsonAsync("User", updateUserContainerDTO);
+        if (response.IsSuccessStatusCode)
         {
-            // Mensaje de éxito
-            Console.WriteLine("Contraseña actualizada");
+
+            successMessage = "Password modification successfully!";
         }
         else
         {
-            // Mensaje de error
+            errorMessage = "Failed password modification.";
         }
 
     }
@@ -87,7 +104,7 @@
 
 <style>
     .input-white::placeholder {
-        color: #ffff; 
+        color: #ffff;
     }
 
     .btn-secondary-custom {
@@ -96,9 +113,8 @@
         color: white;
     }
 
-    .btn-secondary-custom:hover {
-        background-color: #0b5ed7;
-        border-color: #0a58ca;
-    }
-    
+        .btn-secondary-custom:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
 </style>

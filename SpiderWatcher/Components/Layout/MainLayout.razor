@@ -4,7 +4,7 @@
 @inject NavigationManager Navigation
 
 <div class="page bg-dark">
-    @if (!IsHomePage())
+    @if (!IsHomePage() && !IsPlayPage())
     {
         <div class="sidebar bg-dark">
             <NavMenu />
@@ -23,5 +23,12 @@
         var uri = new Uri(Navigation.Uri);
         var path = uri.AbsolutePath.Trim('/');
         return string.IsNullOrEmpty(path);
+    }
+
+    private bool IsPlayPage()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var path = uri.AbsolutePath;
+        return path.StartsWith("/reproducirContenido", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -16,24 +16,34 @@
         <div class="col bg-dark">
             <div class="input-group">
                 <span class="input-group-text icon bg-dark text-white">&#128269;</span>
-                <input type="text" id="searchInput" class="form-control bg-secondary text-white" placeholder="Buscar" @bind="searchQuery" @onkeydown="HandleKeyDown">
+                <input type="text" id="searchInput" class="form-control bg-secondary text-white input-white" placeholder="Buscar" @bind="searchQuery" @onkeydown="HandleKeyDown">
             </div>
         </div>
     </div>
-        <!-- Video Thumbnails will be inserted here -->
-        @if(contents2 is null)
-        {
-            <p>Empty</p>
-        }else if(contents2.Count == 0)
-        {
-            <p>No se encontraron resultados</p>
-        }
-        else
-        {
-            <div class="row">
-                @foreach (var content in contents2)
-                {
-                    <div class="col mt-3">
+
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center align-items-center">
+            <div class="spinner-border text-light" style="width: 3rem; height: 3rem; role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <strong class="ms-2">Cargando...</strong>
+        </div>
+    }
+    else if (contents2 is null)
+    {
+        <p>Empty</p>
+    }
+    else if (contents2.Count == 0)
+    {
+        <p>No se encontraron resultados</p>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var content in contents2)
+            {
+                <div class="col mt-3">
                     <div class="cardVideo bg-dark text-white align-items-center" @onclick="() => VerDetalles(content.idContent)">
                         @if (content.ImageData != null)
                         {
@@ -43,17 +53,14 @@
                         {
                             <img src="" class="card-img-top" alt="No image" />
                         }
-
-                            <div class="card-body">
+                        <div class="card-body">
                             <p class="card-text titleCardText align-items-center"><strong>@content.title</strong></p>
-                            </div>
-
                         </div>
                     </div>
-                }
-            </div>
-        }
-
+                </div>
+            }
+        </div>
+    }
 </div>
 
 @code {
@@ -61,13 +68,22 @@
     private string successMessage;
     private string errorMessage;
     private ContentsDTO contentsDTO = new ContentsDTO();
-    //private Contents contents { get; set; }
+    private List<ContentsDTO> allContents = new List<ContentsDTO>();
     private List<ContentsDTO> contents2 = new List<ContentsDTO>();
+    private bool authenticated;
+    private bool isLoading = true;
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-        ExecuteSearch();
-        return base.OnInitializedAsync();
+        authenticated = await AuthService.IsUserAuthenticatedAsync();
+        if (!authenticated)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            await LoadAllContentsAsync();
+        }
     }
 
     private async Task BackButtonClicked()
@@ -83,55 +99,62 @@
         }
     }
 
-    private async void ExecuteSearch()
+    private async Task LoadAllContentsAsync()
     {
-            Console.WriteLine($"Buscar: {searchQuery}");
-            try
+        isLoading = true;
+        try
+        {
+            var token = await AuthService.GetTokenAsync();
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var userID = await AuthService.GetUserIdAsync();
+            var response = await Http.GetAsync($"Content/all/{userID}");
+            if (response.IsSuccessStatusCode)
             {
-
-                var token = await AuthService.GetTokenAsync();
-                Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                var userID = 42; //esto habra que jalarlo de la sesion
-                var response = await Http.GetAsync($"Content/all/{userID}");
-                if (response.IsSuccessStatusCode)
+                var responseBody = await response.Content.ReadAsStringAsync();
+                allContents = JsonConvert.DeserializeObject<List<ContentsDTO>>(responseBody);
+                foreach (var content in allContents)
                 {
-                    var responseBody = await response.Content.ReadAsStringAsync();
-                    contents2 = JsonConvert.DeserializeObject<List<ContentsDTO>>(responseBody);
-                    foreach (var content in contents2)
-                    {
-                        content.ImageData = await AzureBlobService.GetImageAsync(content.imageReference);
-                    }
-
-   
-                    StateHasChanged();
+                    content.ImageData = await AzureBlobService.GetImageAsync(content.imageReference);
                 }
-                else
-                {
-                    errorMessage = "No se encontraron resultados";
-                }
+                contents2 = new List<ContentsDTO>(allContents);
             }
-            catch (Exception ex)
+            else
             {
-                errorMessage = ex.Message;
+                errorMessage = "No se encontraron resultados";
             }
-        // var result = await Http.GetAsync($"api/busqueda?query={searchQuery}");
-            // var content = await result.Content.ReadAsStringAsync();
-            // Procesa el resultado de la búsqueda
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        isLoading = false;
+    }
+
+    private void ExecuteSearch()
+    {
+        if (string.IsNullOrEmpty(searchQuery))
+        {
+            contents2 = new List<ContentsDTO>(allContents);
+        }
+        else
+        {
+            contents2 = allContents.Where(c => c.title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+        StateHasChanged();
     }
 
     private void VerDetalles(int id)
     {
         NavigationManager.NavigateTo($"/visualizarContenido/{id}");
     }
-
 }
 
 <style>
     .input-group-text.icon {
-        font-size: 1.2rem; 
-        color: #17a2b8; 
-        background-color: #343a40; 
-        border: 1px solid #ced4da; 
+        font-size: 1.2rem;
+        color: #17a2b8;
+        background-color: #343a40;
+        border: 1px solid #ced4da;
     }
 
     div.cardVideo {
@@ -141,8 +164,12 @@
         text-align: center;
     }
 
-    .titleCardText{
+    .titleCardText {
         font-size: 1.5rem;
         color: #00e5ff;
+    }
+
+    .input-white::placeholder {
+        color: #ffff;
     }
 </style>
